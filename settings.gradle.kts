@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "github-plugin-downloader"
+rootProject.name = "github-tvbox-plugin-downloader"
 include(":app")
 include(":api")
 project(":api").projectDir = rootDir.resolve("./TvBoxPlugin/api/")
