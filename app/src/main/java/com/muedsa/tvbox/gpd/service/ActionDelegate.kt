@@ -37,10 +37,15 @@ class ActionDelegate(
     fun downloadAsset(asset: Asset): String {
         val file = DownloaderPlugin.DOWNLOAD_DIR.resolve(asset.name)
         if (file.isDirectory) {
-            throw IllegalStateException("存在重名的目录,请手动删除 ${file.absolutePath}")
-        }
-        if(!file.canWrite()) {
-            throw IllegalStateException("TvBox没有文件管理权限,请手动授权")
+            throw IllegalStateException("存在重名的目录,请手动删除再下载 ${file.absolutePath}")
+        } else if(file.exists()) {
+            if(!file.canWrite()) {
+                throw IllegalStateException("TvBox没有文件管理权限或当前文件已存在且不可写入")
+            }
+        } else {
+            if(!file.createNewFile()) {
+                throw IllegalStateException("TvBox没有文件管理权限,请手动授权")
+            }
         }
         val request = asset.browserDownloadUrl.toRequestBuild().build()
         okHttpClient.newCall(request).execute().use { response ->
