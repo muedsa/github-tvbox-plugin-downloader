@@ -10,13 +10,18 @@ import com.muedsa.tvbox.api.data.SavedMediaCard
 import com.muedsa.tvbox.api.service.IMediaDetailService
 import com.muedsa.tvbox.gpd.DownloaderConsts
 import com.muedsa.tvbox.gpd.GithubHelper
+import com.muedsa.tvbox.gpd.model.Release
+import com.muedsa.tvbox.gpd.model.Repository
 import com.muedsa.tvbox.tool.LenientJson
+import com.muedsa.tvbox.tool.checkSuccess
+import com.muedsa.tvbox.tool.get
+import com.muedsa.tvbox.tool.stringBody
+import com.muedsa.tvbox.tool.toRequestBuild
 import kotlinx.serialization.encodeToString
 import okhttp3.OkHttpClient
 
 class MediaDetailService(
     private val okHttpClient: OkHttpClient,
-    private val githubApiService: GithubApiService,
 ) : IMediaDetailService {
 
     private val actionDelegate by lazy {
@@ -30,17 +35,20 @@ class MediaDetailService(
             return actionDelegate.execAsGetDetailData(mediaId, detailUrl)
         }
         val (owner, repo) = mediaId.split("/")
-        val repository = githubApiService.repo(owner = owner, repo = repo)
-        val release = githubApiService.latestRelease(owner = owner, repo = repo)
-        val repoImageUrl = GithubHelper.createRepoGraphImageUrl(repository.fullName)
-        return MediaDetail(
-            id = repository.fullName,
-            title = repository.fullName,
-            subTitle = repository.owner.login,
-            description = repository.description,
-            detailUrl = repository.fullName,
-            backgroundImageUrl = repoImageUrl,
-            playSourceList = listOf(
+        var repositoryResp = "https://api.github.com/repos/${owner}/${repo}"
+            .toRequestBuild()
+            .get(okHttpClient = okHttpClient)
+            .checkSuccess(DownloaderConsts.GITHUB_API_RESP_CHECKER)
+        if (!repositoryResp.isSuccessful) {
+            throw RuntimeException(repositoryResp.stringBody())
+        }
+        val repository = LenientJson.decodeFromString<Repository>(repositoryResp.stringBody())
+        val resp = "https://api.github.com/repos/${owner}/${repo}/releases/latest"
+            .toRequestBuild()
+            .get(okHttpClient = okHttpClient)
+        val playSourceList = if (resp.isSuccessful) {
+            val release = LenientJson.decodeFromString<Release>(resp.stringBody())
+            listOf(
                 MediaPlaySource(
                     id = "github",
                     name = "github",
@@ -84,7 +92,17 @@ class MediaDetailService(
                             }
                     }
                 )
-            ),
+            )
+        } else emptyList()
+        val repoImageUrl = GithubHelper.createRepoGraphImageUrl(repository.fullName)
+        return MediaDetail(
+            id = repository.fullName,
+            title = repository.fullName,
+            subTitle = repository.owner.login,
+            description = repository.description,
+            detailUrl = repository.fullName,
+            backgroundImageUrl = repoImageUrl,
+            playSourceList = playSourceList,
             favoritedMediaCard = SavedMediaCard(
                 id = repository.fullName,
                 title = repository.fullName,

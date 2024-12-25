@@ -1,7 +1,6 @@
 package com.muedsa.tvbox.gpd.service
 
 import com.muedsa.tvbox.api.data.MediaCardType
-import com.muedsa.tvbox.gpd.TestGithubApiService
 import com.muedsa.tvbox.gpd.TestOkHttpClient
 import com.muedsa.tvbox.gpd.checkMediaCard
 import com.muedsa.tvbox.gpd.checkMediaCardRow
@@ -12,7 +11,6 @@ class MediaDetailServiceTest {
 
     private val service = MediaDetailService(
         okHttpClient = TestOkHttpClient,
-        githubApiService = TestGithubApiService,
     )
 
     @Test

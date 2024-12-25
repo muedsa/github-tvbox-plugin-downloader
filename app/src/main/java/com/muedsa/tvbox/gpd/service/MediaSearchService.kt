@@ -5,15 +5,26 @@ import com.muedsa.tvbox.api.data.MediaCardRow
 import com.muedsa.tvbox.api.service.IMediaSearchService
 import com.muedsa.tvbox.gpd.DownloaderConsts
 import com.muedsa.tvbox.gpd.GithubHelper
+import com.muedsa.tvbox.gpd.model.Repository
+import com.muedsa.tvbox.tool.LenientJson
+import com.muedsa.tvbox.tool.checkSuccess
+import com.muedsa.tvbox.tool.get
+import com.muedsa.tvbox.tool.stringBody
+import com.muedsa.tvbox.tool.toRequestBuild
+import okhttp3.OkHttpClient
 
 class MediaSearchService(
-    private val githubApiService: GithubApiService,
+    private val okHttpClient: OkHttpClient,
 ) : IMediaSearchService {
 
     override suspend fun searchMedias(query: String): MediaCardRow {
         val ownerAndRepo = query.split("/")
         check(ownerAndRepo.size == 2) { "请按照 owner/repo 格式输入进行搜索" }
-        val repo = githubApiService.repo(ownerAndRepo[0], ownerAndRepo[1])
+        var resp = "https://api.github.com/repos/${ownerAndRepo[0]}/${ownerAndRepo[1]}"
+            .toRequestBuild()
+            .get(okHttpClient = okHttpClient)
+            .checkSuccess(DownloaderConsts.GITHUB_API_RESP_CHECKER)
+        val repo = LenientJson.decodeFromString<Repository>(resp.stringBody())
         return MediaCardRow(
             title = "repo",
             list = listOf(
