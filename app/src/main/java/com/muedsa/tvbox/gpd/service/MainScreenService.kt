@@ -28,6 +28,13 @@ class MainScreenService : IMainScreenService {
                         coverImageUrl = "https://github.githubassets.com/assets/github-octocat-13c86b8b336d.png",
                     ),
                     MediaCard(
+                        id = "muedsa/TvBox",
+                        title = "muedsa/TvBox",
+                        subTitle = "TvBox仓库",
+                        detailUrl = "muedsa/TvBox",
+                        coverImageUrl = GithubHelper.createRepoGraphImageUrl("muedsa/TvBox"),
+                    ),
+                    MediaCard(
                         id = "muedsa/github-plugin-downloader",
                         title = "muedsa/github-plugin-downloader",
                         subTitle = "本插件仓库",

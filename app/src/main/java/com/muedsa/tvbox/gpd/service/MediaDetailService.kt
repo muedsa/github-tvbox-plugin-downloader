@@ -46,15 +46,20 @@ class MediaDetailService(
         val resp = "https://api.github.com/repos/${owner}/${repo}/releases/latest"
             .toRequestBuild()
             .get(okHttpClient = okHttpClient)
-        val playSourceList = if (resp.isSuccessful) {
+        var description = repository.description ?: ""
+        val playSourceList: List<MediaPlaySource>
+        if (resp.isSuccessful) {
             val release = LenientJson.decodeFromString<Release>(resp.stringBody())
-            listOf(
+            playSourceList = listOf(
                 MediaPlaySource(
                     id = "github",
-                    name = "github",
+                    name = "发布版本:${release.name}",
                     episodeList = buildList {
                         release.assets
-                            .filter { it.name.endsWith(".tbp") && it.contentType == "application/octet-stream" }
+                            .filter {
+                                (it.name.endsWith(".tbp") && it.contentType == "application/octet-stream")
+                                        || (mediaId == "muedsa/TvBox" && it.contentType == "application/vnd.android.package-archive")
+                            }
                             .forEach {
                                 add(
                                     MediaEpisode(
@@ -93,13 +98,16 @@ class MediaDetailService(
                     }
                 )
             )
-        } else emptyList()
+            description = "${description}\n\n最新版本:${release.name}"
+        } else {
+            playSourceList = emptyList()
+        }
         val repoImageUrl = GithubHelper.createRepoGraphImageUrl(repository.fullName)
         return MediaDetail(
             id = repository.fullName,
             title = repository.fullName,
             subTitle = repository.owner.login,
-            description = repository.description,
+            description = description,
             detailUrl = repository.fullName,
             backgroundImageUrl = repoImageUrl,
             playSourceList = playSourceList,
