@@ -74,7 +74,7 @@ class MediaDetailService(
                                         name = "ghp下载 ${it.name}",
                                         flag5 = LenientJson.encodeToString(
                                             it.copy(
-                                                browserDownloadUrl = "https://ghgo.xyz/${it.browserDownloadUrl}",
+                                                browserDownloadUrl = "https://ghfast.top/${it.browserDownloadUrl}",
                                             )
                                         ),
                                     )
