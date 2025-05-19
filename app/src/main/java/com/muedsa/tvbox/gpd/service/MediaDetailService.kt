@@ -17,7 +17,6 @@ import com.muedsa.tvbox.tool.checkSuccess
 import com.muedsa.tvbox.tool.get
 import com.muedsa.tvbox.tool.stringBody
 import com.muedsa.tvbox.tool.toRequestBuild
-import kotlinx.serialization.encodeToString
 import okhttp3.OkHttpClient
 
 class MediaDetailService(
@@ -35,7 +34,7 @@ class MediaDetailService(
             return actionDelegate.execAsGetDetailData(mediaId, detailUrl)
         }
         val (owner, repo) = mediaId.split("/")
-        var repositoryResp = "https://api.github.com/repos/${owner}/${repo}"
+        val repositoryResp = "https://api.github.com/repos/${owner}/${repo}"
             .toRequestBuild()
             .get(okHttpClient = okHttpClient)
             .checkSuccess(DownloaderConsts.GITHUB_API_RESP_CHECKER)
@@ -43,16 +42,16 @@ class MediaDetailService(
             throw RuntimeException(repositoryResp.stringBody())
         }
         val repository = LenientJson.decodeFromString<Repository>(repositoryResp.stringBody())
-        val resp = "https://api.github.com/repos/${owner}/${repo}/releases/latest"
+        val latestReleaseResp = "https://api.github.com/repos/${owner}/${repo}/releases/latest"
             .toRequestBuild()
             .get(okHttpClient = okHttpClient)
         var description = repository.description ?: ""
-        val playSourceList: List<MediaPlaySource>
-        if (resp.isSuccessful) {
-            val release = LenientJson.decodeFromString<Release>(resp.stringBody())
-            playSourceList = listOf(
+        val playSourceList: MutableList<MediaPlaySource> = mutableListOf()
+        if (latestReleaseResp.isSuccessful) {
+            val release = LenientJson.decodeFromString<Release>(latestReleaseResp.stringBody())
+            playSourceList.add(
                 MediaPlaySource(
-                    id = "github",
+                    id = "github-release",
                     name = "发布版本:${release.name}",
                     episodeList = buildList {
                         release.assets
@@ -98,9 +97,64 @@ class MediaDetailService(
                     }
                 )
             )
-            description = "${description}\n\n最新版本:${release.name}"
-        } else {
-            playSourceList = emptyList()
+            description += "\n\n最新版本:${release.name}"
+        }
+        val releasesListResp = "https://api.github.com/repos/${owner}/${repo}/releases"
+            .toRequestBuild()
+            .get(okHttpClient = okHttpClient)
+        if (releasesListResp.isSuccessful) {
+            val releaseList = LenientJson.decodeFromString<List<Release>>(releasesListResp.stringBody())
+            if (releaseList.isNotEmpty() && releaseList[0].preRelease) {
+                val preRelease = releaseList[0]
+                playSourceList.add(
+                    MediaPlaySource(
+                        id = "github-pre-release",
+                        name = "预发布版本:${preRelease.name}",
+                        episodeList = buildList {
+                            preRelease.assets
+                                .filter {
+                                    (it.name.endsWith(".tbp") && it.contentType == "application/octet-stream")
+                                            || (mediaId == "muedsa/TvBox" && it.contentType == "application/vnd.android.package-archive")
+                                }
+                                .forEach {
+                                    add(
+                                        MediaEpisode(
+                                            id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                            name = "下载 ${it.name}",
+                                            flag5 = LenientJson.encodeToString(it),
+                                        )
+                                    )
+                                    add(
+                                        MediaEpisode(
+                                            id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                            name = "ghp下载 ${it.name}",
+                                            flag5 = LenientJson.encodeToString(
+                                                it.copy(
+                                                    browserDownloadUrl = "https://ghfast.top/${it.browserDownloadUrl}",
+                                                )
+                                            ),
+                                        )
+                                    )
+                                    add(
+                                        MediaEpisode(
+                                            id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                            name = "gh-proxy下载 ${it.name}",
+                                            flag5 = LenientJson.encodeToString(
+                                                it.copy(
+                                                    browserDownloadUrl = it.browserDownloadUrl
+                                                        .replaceFirst(
+                                                            "https://github.com/",
+                                                            "https://gh-proxy.com/github.com/"
+                                                        )
+                                                )
+                                            ),
+                                        )
+                                    )
+                                }
+                        }
+                    )
+                )
+            }
         }
         val repoImageUrl = GithubHelper.createRepoGraphImageUrl(repository.fullName)
         return MediaDetail(
