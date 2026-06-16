@@ -4,6 +4,8 @@ import com.muedsa.tvbox.api.plugin.TvBoxContext
 import com.muedsa.tvbox.tool.IPv6Checker
 import com.muedsa.tvbox.tool.createOkHttpClient
 import okhttp3.CookieJar
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 val TestPlugin by lazy {
     DownloaderPlugin(
@@ -22,5 +24,7 @@ val TestOkHttpClient by lazy {
         debug = true,
         cookieJar = CookieJar.NO_COOKIES,
         onlyIpv4 = true
-    )
+    ) {
+        proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", 23333)))
+    }
 }
