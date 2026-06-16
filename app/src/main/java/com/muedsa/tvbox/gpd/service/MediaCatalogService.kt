@@ -49,11 +49,11 @@ class MediaCatalogService(
             .parseHtml()
             .body()
         val articleEls = body.select(".application-main main .topic article")
-        return PagingResult<MediaCard>(
+        return PagingResult(
             list = articleEls.map { articleEl ->
                 val repoFullName =
                     articleEl.selectFirst(">div >div >div >h3")!!.text().replace(" ", "")
-                val desc = articleEl.selectFirst(">div >div >p")!!.text().trim()
+                val desc = articleEl.selectFirst(">div:last-child >div >p")?.text()?.trim() ?: ""
                 val customImageUrl = articleEl.child(0).let {
                     if (it.tagName() == "a") {
                         it.selectFirst("img")?.attr("src")
