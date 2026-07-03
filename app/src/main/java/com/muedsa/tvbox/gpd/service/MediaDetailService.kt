@@ -70,17 +70,6 @@ class MediaDetailService(
                                 add(
                                     MediaEpisode(
                                         id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
-                                        name = "ghp下载 ${it.name}",
-                                        flag5 = LenientJson.encodeToString(
-                                            it.copy(
-                                                browserDownloadUrl = "https://ghfast.top/${it.browserDownloadUrl}",
-                                            )
-                                        ),
-                                    )
-                                )
-                                add(
-                                    MediaEpisode(
-                                        id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
                                         name = "gh-proxy下载 ${it.name}",
                                         flag5 = LenientJson.encodeToString(
                                             it.copy(
@@ -88,6 +77,51 @@ class MediaDetailService(
                                                     .replaceFirst(
                                                         "https://github.com/",
                                                         "https://gh-proxy.com/github.com/"
+                                                    )
+                                            )
+                                        ),
+                                    )
+                                )
+                                add(
+                                    MediaEpisode(
+                                        id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                        name = "gh-proxy Fastly下载 ${it.name}",
+                                        flag5 = LenientJson.encodeToString(
+                                            it.copy(
+                                                browserDownloadUrl = it.browserDownloadUrl
+                                                    .replaceFirst(
+                                                        "https://github.com/",
+                                                        "https://cdn.gh-proxy.com/github.com/"
+                                                    )
+                                            )
+                                        ),
+                                    )
+                                )
+                                add(
+                                    MediaEpisode(
+                                        id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                        name = "gh-proxy v4下载 ${it.name}",
+                                        flag5 = LenientJson.encodeToString(
+                                            it.copy(
+                                                browserDownloadUrl = it.browserDownloadUrl
+                                                    .replaceFirst(
+                                                        "https://github.com/",
+                                                        "https://v4.gh-proxy.com/github.com/"
+                                                    )
+                                            )
+                                        ),
+                                    )
+                                )
+                                add(
+                                    MediaEpisode(
+                                        id = ActionDelegate.ACTION_DOWNLOAD_ASSET,
+                                        name = "gh-proxy v6下载 ${it.name}",
+                                        flag5 = LenientJson.encodeToString(
+                                            it.copy(
+                                                browserDownloadUrl = it.browserDownloadUrl
+                                                    .replaceFirst(
+                                                        "https://github.com/",
+                                                        "https://v6.gh-proxy.com/github.com/"
                                                     )
                                             )
                                         ),
